@@ -28,6 +28,9 @@ public class AuthService {
     }
 
     private void validatePassword(String rawPassword, String encodedPassword){
+        if(isEmpty(rawPassword)){
+            throw new ValidationException("Password must be informed");
+        }
         if(!passwordEncoder.matches(rawPassword, encodedPassword)){
             throw new ValidationException("Invalid password");
         }
