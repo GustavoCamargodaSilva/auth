@@ -1,2 +1,24 @@
-package br.com.microservice.stateless_any_api.core.controller;public class AnyController {
+package br.com.microservice.stateless_any_api.core.controller;
+
+import br.com.microservice.stateless_any_api.core.dto.AnyResponse;
+import br.com.microservice.stateless_any_api.core.service.AnyService;
+import lombok.AllArgsConstructor;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestHeader;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+@RestController
+@AllArgsConstructor
+@RequestMapping("/api/resource")
+public class AnyController {
+
+    private final AnyService anyService;
+
+    @GetMapping
+    public AnyResponse getResource(@RequestHeader String acessToken) {
+        return anyService.getData(acessToken);
+    }
+
+
 }
