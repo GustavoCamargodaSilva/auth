@@ -1,13 +1,14 @@
 package br.com.microservice.stateful_auth_api.core.service;
+
 import br.com.microservice.stateful_auth_api.core.dto.AuthRequest;
 import br.com.microservice.stateful_auth_api.core.dto.AuthUserResponse;
 import br.com.microservice.stateful_auth_api.core.dto.TokenDTO;
 import br.com.microservice.stateful_auth_api.core.infra.exception.AuthenticationException;
+import br.com.microservice.stateful_auth_api.core.infra.exception.ValidationException;
 import br.com.microservice.stateful_auth_api.core.model.User;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import br.com.microservice.stateful_auth_api.core.repository.UserRepository;
-import jakarta.validation.ValidationException;
 import lombok.AllArgsConstructor;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import static org.springframework.util.ObjectUtils.isEmpty;
 
@@ -15,78 +16,51 @@ import static org.springframework.util.ObjectUtils.isEmpty;
 @AllArgsConstructor
 public class AuthService {
 
-    private final UserRepository userRepository;
-    private final PasswordEncoder passwordEncoder;
+    private final UserRepository repository;
+    private final PasswordEncoder passwordEncoder;;
     private final TokenService tokenService;
 
-    public TokenDTO login(AuthRequest authRequest){
-
-        var user = findByUserName(authRequest.username());
-
-        var acessToken = tokenService.createToken(user.getUsername());
-
-        validatePassword(authRequest.password(), user.getPassword());
-
-        return new TokenDTO(acessToken);
+    public TokenDTO login(AuthRequest request) {
+        var user = findByUsername(request.username());
+        validatePassword(request.password(), user.getPassword());
+        var accessToken = tokenService.createToken(user.getUsername());
+        return new TokenDTO(accessToken);
     }
 
-    public AuthUserResponse getAuthenticatedUser(String acessToken){
+    private void validatePassword(String rawPassword, String encodedPassword) {
+        if (!passwordEncoder.matches(rawPassword, encodedPassword)) {
+            throw new ValidationException("The password is incorrect!");
+        }
+    }
 
-        var TokenData = tokenService.getTokenData(acessToken);
+    public TokenDTO validateToken(String token) {
+        validateExistingToken(token);
+        var valid = tokenService.validateAccessToken(token);
+        if (valid) {
+            return new TokenDTO(token);
+        }
+        throw new AuthenticationException("Invalid token!");
+    }
 
-        var user = findByUserName(TokenData.username());
+    private void validateExistingToken(String token) {
+        if (isEmpty(token)) {
+            throw new ValidationException("The access token must be informed!");
+        }
+    }
 
+    public AuthUserResponse getAuthenticatedUser(String token) {
+        var tokenData = tokenService.getTokenData(token);
+        var user = findByUsername(tokenData.username());
         return new AuthUserResponse(user.getId(), user.getUsername());
     }
 
-    public void logout(String acessToken){
-
-        tokenService.deleteToken(acessToken);
+    public void logout(String token) {
+        tokenService.deleteRedisToken(token);
     }
 
-    private User findByUserName(String username){
-
-        return userRepository.findByUsername(username)
-
-                .orElseThrow(() -> new ValidationException("User not found"));
-    }
-
-    public TokenDTO validateToken(String acessToken){
-
-        validateExistingToken(acessToken);
-
-        var valid = tokenService.validateAcessToken(acessToken);
-
-        if(valid){
-
-            return new TokenDTO(acessToken);
-
-        }
-
-        throw new AuthenticationException("Invalid token");
-    }
-
-
-    private void validatePassword(String rawPassword, String encodedPassword){
-
-        if(isEmpty(rawPassword)){
-
-            throw new ValidationException("Password must be informed");
-
-        }
-        if(!passwordEncoder.matches(rawPassword, encodedPassword)){
-
-            throw new ValidationException("Invalid password");
-
-        }
-    }
-
-    private void validateExistingToken(String acessToken){
-
-        if(isEmpty(acessToken)){
-
-            throw new ValidationException("Token must be informed");
-
-        }
+    private User findByUsername(String username) {
+        return repository
+                .findByUsername(username)
+                .orElseThrow(() -> new ValidationException("User not found!"));
     }
 }
