@@ -11,16 +11,10 @@ public class AnyService {
 
     private final TokenService tokenService;
 
-    public AnyResponse getData(String acessToken){
-
-        tokenService.validateToken(acessToken);
-
-        var authUser = tokenService.getAuthenticatedUser(acessToken);
-
+    public AnyResponse getData(String accessToken) {
+        tokenService.validateToken(accessToken);
+        var authUser = tokenService.getAuthenticatedUser(accessToken);
         var ok = HttpStatus.OK;
-
         return new AnyResponse(ok.name(), ok.value(), authUser);
-
     }
-
 }

@@ -10,10 +10,10 @@ import org.springframework.web.service.annotation.PostExchange;
 @HttpExchange("/api/auth")
 public interface TokenClient {
 
-    @PostExchange("/token/validate")
-    TokenDTO validateToken(@RequestHeader String acessToken);
+    @PostExchange("token/validate")
+    TokenDTO validateToken(@RequestHeader String accessToken);
 
     @GetExchange("user")
-    AuthUserResponse getAuthenticatedUser(@RequestHeader String acessToken);
+    AuthUserResponse getAuthenticatedUser(@RequestHeader String accessToken);
 
 }

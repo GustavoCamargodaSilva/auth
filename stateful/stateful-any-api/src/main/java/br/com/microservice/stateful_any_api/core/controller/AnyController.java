@@ -13,12 +13,11 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/api/resource")
 public class AnyController {
 
-    private final AnyService anyService;
+    private final AnyService service;
 
     @GetMapping
-    public AnyResponse getResource(@RequestHeader String acessToken) {
-        return anyService.getData(acessToken);
+    public AnyResponse getResource(@RequestHeader String accessToken) {
+        return service.getData(accessToken);
     }
-
 
 }
